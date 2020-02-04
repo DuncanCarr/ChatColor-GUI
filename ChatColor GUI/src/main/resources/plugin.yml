@@ -1,0 +1,10 @@
+name: ChatColorGUI
+version: ${project.version}
+main: cervisial.chatcolorgui.ChatColorGUI
+authors: [Cervisial]
+description: Change your chat color by using a fancy interface
+
+commands:
+  color:
+    usage: /color
+    description: Change your chat color by using a fancy interface
