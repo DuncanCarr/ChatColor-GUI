@@ -3,6 +3,7 @@ package cervisial.chatcolorgui;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -40,12 +41,35 @@ public class InventoryManager implements Listener {
         return item;
     }
 
-    public ItemStack createItem(String permission, String identifier, int decimal, Player p) {
-        if (p.hasPermission(permission)) {
-            return unlockedItem(identifier, decimal);
+    public ItemStack selectedItem(String identifier) {
+        ItemStack item = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 13 );
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(plugin.colorize("&dSelected Color &7(" + identifier + "&7)"));
+        meta.addEnchant(Enchantment.ARROW_DAMAGE, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public ItemStack createItem(String permission, String identifier, int decimal, Player p, String shortHand) {
+        if (shortHand.equalsIgnoreCase(plugin.getConfig().getString("" + p.getUniqueId()))) {
+            return selectedItem(identifier);
         } else {
-            return lockedItem(identifier);
+            if (p.hasPermission(permission)) {
+                return unlockedItem(identifier, decimal);
+            } else {
+                return lockedItem(identifier);
+            }
         }
+    }
+
+    public ItemStack filler() {
+        ItemStack item = new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(plugin.colorize("&r"));
+        item.setItemMeta(meta);
+        return item;
     }
 
     public Inventory generateColorInventory(Player p) {
@@ -53,25 +77,41 @@ public class InventoryManager implements Listener {
 
         // Blank template: inventory.setItem(, createItem("chatcolor.", "", , p));
 
-        inventory.setItem(0, createItem("chatcolor.dark_red", "&4Dark Red",11141120, p));
-        inventory.setItem(1, createItem("chatcolor.red", "&cRed",	16733525, p));
-        inventory.setItem(2, createItem("chatcolor.gold", "&6Gold", 16755200, p));
-        inventory.setItem(3, createItem("chatcolor.yellow", "&eYellow", 16777045, p));
-        inventory.setItem(4, createItem("chatcolor.dark_green", "&2Dark Green", 	43520, p));
-        inventory.setItem(5, createItem("chatcolor.green", "&aGreen", 5635925, p));
-        inventory.setItem(6, createItem("chatcolor.aqua", "&bAqua",5636095, p));
-        inventory.setItem(7, createItem("chatcolor.dark_aqua", "&3Dark Aqua", 43690, p));
-        inventory.setItem(8, createItem("chatcolor.dark_blue", "&1Dark Blue", 170, p));
-        inventory.setItem(9, createItem("chatcolor.blue", "&9Blue", 5592575, p));
-        inventory.setItem(10, createItem("chatcolor.light_purple", "&dLight Purple", 16733695, p));
-        inventory.setItem(11, createItem("chatcolor.dark_purple", "&5Dark Purple", 11141290, p));
-        inventory.setItem(12, createItem("chatcolor.white", "&fWhite",16777215, p));
-        inventory.setItem(13, createItem("chatcolor.gray", "&7Gray",11184810, p));
-        inventory.setItem(14, createItem("chatcolor.dark_gray", "&8Dark Gray", 5592405, p));
-        inventory.setItem(15, createItem("chatcolor.black", "&0Black", 0, p));
-
+        inventory.setItem(0, createItem("chatcolor.dark_red", "&4Dark Red",11141120, p, "&4"));
+        inventory.setItem(1, createItem("chatcolor.red", "&cRed",	16733525, p, "&c"));
+        inventory.setItem(2, createItem("chatcolor.gold", "&6Gold", 16755200, p, "&6"));
+        inventory.setItem(3, createItem("chatcolor.yellow", "&eYellow", 16777045, p, "&e"));
+        inventory.setItem(4, createItem("chatcolor.dark_green", "&2Dark Green", 	43520, p, "&2"));
+        inventory.setItem(5, createItem("chatcolor.green", "&aGreen", 5635925, p, "&a"));
+        inventory.setItem(6, createItem("chatcolor.aqua", "&bAqua",5636095, p, "&b"));
+        inventory.setItem(7, createItem("chatcolor.dark_aqua", "&3Dark Aqua", 43690, p, "&3"));
+        inventory.setItem(8, createItem("chatcolor.dark_blue", "&1Dark Blue", 170, p, "&1"));
+        inventory.setItem(9, filler());
+        inventory.setItem(10, createItem("chatcolor.blue", "&9Blue", 5592575, p, "&9"));
+        inventory.setItem(11, createItem("chatcolor.light_purple", "&dLight Purple", 16733695, p, "&d"));
+        inventory.setItem(12, createItem("chatcolor.dark_purple", "&5Dark Purple", 11141290, p, "&5"));
+        inventory.setItem(13, createItem("chatcolor.white", "&fWhite",16777215, p, "&f"));
+        inventory.setItem(14, createItem("chatcolor.gray", "&7Gray",11184810, p, "&7"));
+        inventory.setItem(15, createItem("chatcolor.dark_gray", "&8Dark Gray", 5592405, p, "&8"));
+        inventory.setItem(16, createItem("chatcolor.black", "&0Black", 0, p, "&0"));
+        inventory.setItem(17, filler());
+        inventory.setItem(18, filler());
+        inventory.setItem(19, filler());
+        inventory.setItem(20, filler());
+        inventory.setItem(21, filler());
+        inventory.setItem(22, filler());
+        inventory.setItem(23, filler());
+        inventory.setItem(24, filler());
+        inventory.setItem(25, filler());
+        inventory.setItem(26, filler());
 
         return inventory;
+    }
+
+    public void setChatColor(String color, String identifier, Player p) {
+        plugin.getConfig().set("" + p.getUniqueId(), color);
+        p.sendMessage(plugin.colorize("&aYou have set your chat color to: " + identifier));
+        // Blank: setChatColor("", "", p);
     }
 
     @EventHandler (priority = EventPriority.HIGHEST)
@@ -79,78 +119,66 @@ public class InventoryManager implements Listener {
         Player p = (Player) event.getWhoClicked();
         ItemStack item = event.getCurrentItem();
         Inventory inventory = event.getInventory();
+        String itemDisplayName = item.getItemMeta().getDisplayName();
 
         if (inventory.getTitle().equals("Select a chat color...")) {
             event.setCancelled(true);
-            if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&cLocked Color"))) {
+            if (itemDisplayName.contains(plugin.colorize("&cLocked Color"))) {
                 p.closeInventory();
                 p.sendMessage(plugin.colorize("&cYou do not have access to use this color! If you think this is an error, please report it."));
-            } else {
+            } else if (itemDisplayName.contains(plugin.colorize("&aUnlocked Color"))){
                 p.closeInventory();
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&4Dark Red"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&4");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &4Dark Red"));
+                if (itemDisplayName.contains(plugin.colorize("&4Dark Red"))) {
+                    setChatColor("&4", "&4Dark Red", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&cRed"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&c");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &cRed"));
+                if (itemDisplayName.contains(plugin.colorize("&cRed"))) {
+                    setChatColor("&c", "&cRed", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&6Gold"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&6");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &6Gold"));
+                if (itemDisplayName.contains(plugin.colorize("&6Gold"))) {
+                    setChatColor("&6", "&6Gold", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&eYellow"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&e");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &eYellow"));
+                if (itemDisplayName.contains(plugin.colorize("&eYellow"))) {
+                    setChatColor("&e", "&eYellow", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&2Dark Green"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&2");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &2Dark Green"));
+                if (itemDisplayName.contains(plugin.colorize("&2Dark Green"))) {
+                    setChatColor("&2", "&2Dark Green", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&aGreen"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&a");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &aGreen"));
+                if (itemDisplayName.contains(plugin.colorize("&aGreen"))) {
+                    setChatColor("&a", "&aGreen", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&bAqua"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&b");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &bAqua"));
+                if (itemDisplayName.contains(plugin.colorize("&bAqua"))) {
+                    setChatColor("&b", "&bAqua", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&3Dark Aqua"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&3");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &3Dark Aqua"));
+                if (itemDisplayName.contains(plugin.colorize("&3Dark Aqua"))) {
+                    setChatColor("&3", "&3Dark Aqua", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&1Dark Blue"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&1");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &1Dark Blue"));
+                if (itemDisplayName.contains(plugin.colorize("&1Dark Blue"))) {
+                    setChatColor("&1", "&1Dark Blue", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&9Blue"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&9");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &9Blue"));
+                if (itemDisplayName.contains(plugin.colorize("&9Blue"))) {
+                    setChatColor("&9", "&9Blue", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&dLight Purple"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&d");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &dLight Purple"));
+                if (itemDisplayName.contains(plugin.colorize("&dLight Purple"))) {
+                    setChatColor("&d", "&dLight Purple", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&5Dark Purple"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&5");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &5Dark Purple"));
+                if (itemDisplayName.contains(plugin.colorize("&5Dark Purple"))) {
+                    setChatColor("&5", "&5Dark Purple", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&fWhite"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&f");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &fWhite"));
+                if (itemDisplayName.contains(plugin.colorize("&fWhite"))) {
+                    setChatColor("&f", "&fWhite", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&7Gray"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&7");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &7Gray"));
+                if (itemDisplayName.contains(plugin.colorize("&7Gray"))) {
+                    setChatColor("&7", "&7Gray", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&8Dark Gray"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&8");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &8Dark Gray"));
+                if (itemDisplayName.contains(plugin.colorize("&8Dark Gray"))) {
+                    setChatColor("&8", "&8Dark Gray", p);
                 }
-                if (item.getItemMeta().getDisplayName().contains(plugin.colorize("&0Black"))) {
-                    plugin.getConfig().set("" + p.getUniqueId(), "&0");
-                    p.sendMessage(plugin.colorize("&aYou have set your chat color to: &0Black"));
+                if (itemDisplayName.contains(plugin.colorize("&0Black"))) {
+                    setChatColor("&0", "&0Black", p);
                 }
+            } else if (itemDisplayName.contains(plugin.colorize("&dSelected Color"))) {
+                p.closeInventory();
+                p.sendMessage(plugin.colorize("&eYou already have this color selected!"));
             }
         } else {
             event.setCancelled(false);
