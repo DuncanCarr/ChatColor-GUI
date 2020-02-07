@@ -19,7 +19,28 @@ public class ColorCMD implements CommandExecutor {
         }
 
         Player p = (Player) sender;
-        p.openInventory(plugin.getInventoryManager().generateColorInventory(p));
+        if (args.length == 0) {
+            if (p.hasPermission("chatcolor.gui")) {
+                p.openInventory(plugin.getInventoryManager().generateColorInventory(p));
+                return true;
+            } else {
+                p.sendMessage(plugin.colorize("&cYou do not have permission to use this command!"));
+                return true;
+            }
+        } if (args.length == 1) {
+            if (p.hasPermission("chatcolor.gui.other")) {
+                Player target = plugin.getServer().getPlayer(args[0]);
+                if (target == null) {
+                    p.sendMessage(plugin.colorize("&cPlayer not found."));
+                } else {
+                    p.openInventory(plugin.getInventoryManager().generateColorInventory(target));
+                    plugin.getToBe().put(p.getUniqueId(), target.getUniqueId());
+                }
+            } else {
+                p.sendMessage(plugin.colorize("&cYou do not have permission to use this command!"));
+                return true;
+            }
+        }
         return true;
     }
 }
