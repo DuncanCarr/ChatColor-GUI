@@ -17,6 +17,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.UUID;
+
 public class InventoryManager implements Listener {
 
     private ChatColorGUI plugin = JavaPlugin.getPlugin(ChatColorGUI.class);
@@ -110,24 +112,42 @@ public class InventoryManager implements Listener {
 
     public void setChatColor(String color, String identifier, Player p) {
         plugin.getConfig().set("" + p.getUniqueId(), color);
-        p.sendMessage(plugin.colorize("&aYou have set your chat color to: " + identifier));
+        p.sendMessage(plugin.colorize("&aYour chat color has been set to: " + identifier));
         // Blank: setChatColor("", "", p);
+
+        if (plugin.getToBe().containsKey(p.getUniqueId()) || plugin.getToBe().containsValue(p.getUniqueId())) {
+            plugin.getToBe().remove(p.getUniqueId());
+        }
     }
 
     @EventHandler (priority = EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent event) {
-        Player p = (Player) event.getWhoClicked();
         ItemStack item = event.getCurrentItem();
         Inventory inventory = event.getInventory();
-        String itemDisplayName = item.getItemMeta().getDisplayName();
+        String itemDisplayName;
+        if (!(item == null)) {
+            itemDisplayName = item.getItemMeta().getDisplayName();
+        } else {
+            itemDisplayName = null;
+        }
+
+
+        Player p = (Player) event.getWhoClicked();
+        if (plugin.getToBe().containsKey(p.getUniqueId())) {
+            UUID uuid = plugin.getToBe().get(p.getUniqueId());
+            p = plugin.getServer().getPlayer(uuid);
+        }
+
+        Player clicker = (Player) event.getWhoClicked();
+
 
         if (inventory.getTitle().equals("Select a chat color...")) {
             event.setCancelled(true);
             if (itemDisplayName.contains(plugin.colorize("&cLocked Color"))) {
-                p.closeInventory();
-                p.sendMessage(plugin.colorize("&cYou do not have access to use this color! If you think this is an error, please report it."));
+                clicker.closeInventory();
+                clicker.sendMessage(plugin.colorize("&cYou do not have access to use this color! If you think this is an error, please report it."));
             } else if (itemDisplayName.contains(plugin.colorize("&aUnlocked Color"))){
-                p.closeInventory();
+                clicker.closeInventory();
                 if (itemDisplayName.contains(plugin.colorize("&4Dark Red"))) {
                     setChatColor("&4", "&4Dark Red", p);
                 }
@@ -177,8 +197,12 @@ public class InventoryManager implements Listener {
                     setChatColor("&0", "&0Black", p);
                 }
             } else if (itemDisplayName.contains(plugin.colorize("&dSelected Color"))) {
-                p.closeInventory();
-                p.sendMessage(plugin.colorize("&eYou already have this color selected!"));
+                clicker.closeInventory();
+                if (clicker != p) {
+                    clicker.sendMessage(plugin.colorize("&eThey already have that color selected!"));
+                } else {
+                    clicker.sendMessage(plugin.colorize("&eYou already have this color selected!"));
+                }
             }
         } else {
             event.setCancelled(false);
